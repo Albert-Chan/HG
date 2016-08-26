@@ -62,10 +62,14 @@ public class MessageHandler {
 					for (int j = 1; j <= 4; j++) {
 						commentLength |= ( (bytes[commentStart - j] & 0xFF) << (8 * (j - 1)));
 					}
-					commentEnd = commentStart + commentLength;
-					if (commentEnd >= totalLength) {
-						commentEnd = 0;
+					
+					if (commentStart + commentLength >= totalLength) {
+						if (commentEnd == -1) {
+							commentEnd = 0;
+						}
+						break;
 					}
+					commentEnd = commentStart + commentLength;
 					String comment = new String(bytes, commentStart, commentLength, "UTF-8");
 					file.println(comment);
 					System.out.println(comment);
