@@ -28,7 +28,6 @@ public class CrawlerManager {
 		for (String roomName : NAME_TO_ROOMID.keySet()) {
 			Crawler c = new Crawler(roomName, NAME_TO_ROOMID.get(roomName));
 			c.start();
-
 		}
 	}
 }

@@ -12,6 +12,9 @@ import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+/**
+ * the crawler of a given room
+ */
 public class Crawler extends Thread {
 	String roomName;
 	int roomId;
@@ -110,30 +113,40 @@ public class Crawler extends Thread {
 		return socket;
 	}
 
-	private void heartBeat(Socket socket) {
+	@Override
+	public void run() {
+		BarrageHandler messageHandler = null;
+		Timer hearBeatTimer = null;
+		while (true) {
+			try {
+				Socket socket = connect();
+				System.out.println("Connected to " + serverIp + ":" + port + ".");
+				hearBeatTimer = heartBeat(socket);
+				messageHandler = new BarrageHandler(socket, roomName);
+				messageHandler.handle();
+			} catch (IOException e) {
+				e.printStackTrace();
+				continue;
+			} finally {
+				try {
+					if (messageHandler != null) {
+						messageHandler.close();
+					}
+					if (hearBeatTimer != null) {
+						hearBeatTimer.cancel();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private Timer heartBeat(Socket socket) {
 		Timer timer = new Timer(true);
 		TimerTask task = new HeartBeatTask(socket);
 		timer.schedule(task, 60000, 60000);
-	}
-
-	@Override
-	public void run() {
-		MessageHandler messageHandler = null;
-		try {
-			Socket socket = connect();
-			System.out.println("Connected to " + serverIp + ":" + port + ".");
-			heartBeat(socket);
-			messageHandler = new MessageHandler(socket, roomName);
-			messageHandler.handle();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				messageHandler.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+		return timer;
 	}
 }
 
