@@ -1,9 +1,12 @@
 package crawler;
 
-import java.io.FileNotFoundException;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Timer;
@@ -17,7 +20,7 @@ public class BarrageHandler {
 	private static final String COMMENT_HEAD = "{\"type\":";
 	private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
 
-	private PrintWriter file;
+	private BufferedWriter writer;
 	private Socket socket;
 	Timer timer = new Timer(true);
 
@@ -29,7 +32,9 @@ public class BarrageHandler {
 		this.socket = socket;
 		createRecordFile(roomName);
 		TimerTask task = new FileGenerationTask(roomName);
-		timer.schedule(task, 24 * 3600 * 1000, 24 * 3600 * 1000);
+		timer.schedule(task,
+				new Time(System.currentTimeMillis()).roundToDay() + 24 * 3600 * 1000 - System.currentTimeMillis(),
+				24 * 3600 * 1000);
 	}
 
 	public void handle() throws IOException {
@@ -75,8 +80,9 @@ public class BarrageHandler {
 					}
 					commentEnd = commentStart + commentLength;
 					String comment = new String(bytes, commentStart, commentLength, "UTF-8");
-					synchronized (file) {
-						file.println(comment);
+					synchronized (writer) {
+						writer.write(comment);
+						writer.newLine();
 					}
 					System.out.println(comment);
 					// omit the COMMENT_HEAD to speed up
@@ -89,27 +95,27 @@ public class BarrageHandler {
 				vestigeIndex = commentEnd;
 				vestigeLength = totalLength - vestigeIndex;
 			}
-			synchronized (file) {
-				file.flush();
+			synchronized (writer) {
+				writer.flush();
 			}
 		}
 	}
 
-	private void createRecordFile(String roomName) {
-		try {
-			file = new PrintWriter(
-					"./barrage/" + new SimpleDateFormat(DATE_FORMAT_PATTERN).format(System.currentTimeMillis()) + "_"
-							+ roomName + ".txt");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	private void createRecordFile(String roomName) throws IOException, UnsupportedEncodingException {
+		File barrageDir = new File("./barrage/");
+		if (!barrageDir.exists()) {
+			barrageDir.mkdirs();
 		}
+		File file = new File(barrageDir,
+				new SimpleDateFormat(DATE_FORMAT_PATTERN).format(System.currentTimeMillis()) + "_" + roomName + ".txt");
+		file.createNewFile();
+		writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 	}
 
 	public void close() throws IOException {
 		timer.cancel();
 		socket.close();
-		file.close();
+		writer.close();
 	}
 
 	class FileGenerationTask extends TimerTask {
@@ -120,9 +126,13 @@ public class BarrageHandler {
 		}
 
 		public void run() {
-			synchronized (file) {
-				file.close();
-				createRecordFile(roomName);
+			synchronized (writer) {
+				try {
+					writer.close();
+					createRecordFile(roomName);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

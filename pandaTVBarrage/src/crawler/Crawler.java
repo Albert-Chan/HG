@@ -161,7 +161,6 @@ class HeartBeatTask extends TimerTask {
 		try {
 			socket.getOutputStream().write(new byte[] { 0x00, 0x06, 0x00, 0x00 });
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
