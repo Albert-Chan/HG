@@ -33,7 +33,7 @@ public class BarrageHandler {
 		createRecordFile(roomName);
 		TimerTask task = new FileGenerationTask(roomName);
 		timer.schedule(task,
-				new Time(System.currentTimeMillis()).roundToDay() + 24 * 3600 * 1000 - System.currentTimeMillis(),
+				new Time(System.currentTimeMillis()).roundToDayLeftEdge() + 24 * 3600 * 1000 - System.currentTimeMillis(),
 				24 * 3600 * 1000);
 	}
 

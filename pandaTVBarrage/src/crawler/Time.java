@@ -9,12 +9,12 @@ import java.util.GregorianCalendar;
 
 public class Time implements Comparable<Time>, Serializable {
 	private static final long serialVersionUID = 8339895644550649179L;
-	
+
 	private GregorianCalendar calendar;
 	private SimpleDateFormat sdf = new SimpleDateFormat();
 
-	public Time(String time, String format) throws ParseException {
-		sdf.applyPattern(format);
+	public Time(String time, String pattern) throws ParseException {
+		sdf.applyPattern(pattern);
 		Date date = sdf.parse(time);
 		this.calendar = new GregorianCalendar();
 		calendar.setTimeInMillis(date.getTime());
@@ -25,12 +25,12 @@ public class Time implements Comparable<Time>, Serializable {
 		this.calendar = new GregorianCalendar();
 		calendar.setTimeInMillis(timestamp);
 	}
-	
+
 	public Time(Time t) {
 		this(t.getTimestamp());
 	}
 
-	public String formatTime(String pattern) {
+	public String format(String pattern) {
 		sdf.applyPattern(pattern);
 		Date date = new Date(calendar.getTimeInMillis());
 		return sdf.format(date);
@@ -41,7 +41,7 @@ public class Time implements Comparable<Time>, Serializable {
 	}
 
 	/**
-	 * Gets the date(yyyyMMdd) from a time stamp.
+	 * Gets the yyyyMMdd as a number.
 	 * 
 	 * @return yyyyMMdd
 	 */
@@ -51,6 +51,27 @@ public class Time implements Comparable<Time>, Serializable {
 		int day = calendar.get(Calendar.DATE);
 		int yyyyMMdd = year * 10000 + month * 100 + day;
 		return yyyyMMdd;
+	}
+
+	/**
+	 * Gets the yyyyMMddHH as a number.
+	 * 
+	 * @return yyyyMMddHH
+	 */
+	public long getTimeToHour() {
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		return getDay() * 100L + hour;
+	}
+
+	/**
+	 * Gets the yyyyMMddHHmm as a number.
+	 * 
+	 * @return yyyyMMddHHmm
+	 */
+	public long getTimeToMinute() {
+		int hour = calendar.get(Calendar.HOUR_OF_DAY);
+		int minute = calendar.get(Calendar.MINUTE);
+		return getDay() * 10000L + hour * 100 + minute;
 	}
 
 	/**
@@ -64,12 +85,13 @@ public class Time implements Comparable<Time>, Serializable {
 		int timeIndex = (hour * 60 + minute) / 15 + 1;
 		return timeIndex;
 	}
-	
+
 	/**
 	 * Rounds to the beginning of the day.
-	 * @return the timestamp of the beginning of the day.
+	 * 
+	 * @return the timestamp at the beginning of the day.
 	 */
-	public long roundToDay() {
+	public long roundToDayLeftEdge() {
 		GregorianCalendar c = new GregorianCalendar();
 		c.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DATE), 0, 0, 0);
 		c.set(Calendar.MILLISECOND, 0);
@@ -78,24 +100,26 @@ public class Time implements Comparable<Time>, Serializable {
 
 	/**
 	 * Rounds to the timestamp of the time index's left edge.
-	 * @return  the timestamp of the time index's left edge.
+	 * 
+	 * @return the timestamp of the time index's left edge.
 	 */
 	public long roundToTimeIndexLeftEdge() {
 		int timeIndex = getTimeIndex();
-		return roundToDay() + (timeIndex - 1) * 15 * 60 * 1000L;
-	}
-	
-	/**
-	 * Rounds to the timestamp of the time index's right edge.
-	 * @return  the timestamp of the time index's right edge.
-	 */
-	public long roundToTimeIndexRightEdge() {
-		int timeIndex = getTimeIndex();
-		return roundToDay() + timeIndex * 15 * 60 * 1000L;
+		return roundToDayLeftEdge() + (timeIndex - 1) * 15 * 60 * 1000L;
 	}
 
 	/**
-	 *  Gets the days from anotherDay to this.calendar
+	 * Rounds to the timestamp of the time index's right edge.
+	 * 
+	 * @return the timestamp of the time index's right edge.
+	 */
+	public long roundToTimeIndexRightEdge() {
+		int timeIndex = getTimeIndex();
+		return roundToDayLeftEdge() + timeIndex * 15 * 60 * 1000L;
+	}
+
+	/**
+	 * Gets the number of days from anotherDay to this.calendar
 	 */
 	public int getDaysDiff(Time anotherDay) {
 		int yearDiff = this.calendar.get(Calendar.YEAR) - anotherDay.calendar.get(Calendar.YEAR);
@@ -114,6 +138,7 @@ public class Time implements Comparable<Time>, Serializable {
 
 	/**
 	 * Gets the max day of month
+	 * 
 	 * @return
 	 */
 	public int getMaxDayOfMonth() {
@@ -121,7 +146,7 @@ public class Time implements Comparable<Time>, Serializable {
 	}
 
 	/**
-	 * Gets the seconds from 00:00:00 to the time in this.calendar.
+	 * Gets the seconds from 00:00:00 of this day to the time in this.calendar.
 	 * 
 	 * @return the seconds lapsed in this day.
 	 */
@@ -134,27 +159,6 @@ public class Time implements Comparable<Time>, Serializable {
 	}
 
 	/**
-	 * Gets the DateTime(yyyyMMddHH) from a time stamp.
-	 * 
-	 * @return yyyyMMddHH
-	 */
-	public long getTimeToHour() {
-		int hour = calendar.get(Calendar.HOUR_OF_DAY);
-		return getDay() * 100L + hour;
-	}
-
-	/**
-	 * Gets the DateTime(yyyyMMddHHmm) from a time stamp.
-	 * 
-	 * @return yyyyMMddHHmm
-	 */
-	public long getTimeToMinute() {
-		int hour = calendar.get(Calendar.HOUR_OF_DAY);
-		int minute = calendar.get(Calendar.MINUTE);
-		return getDay() * 10000L + hour * 100 + minute;
-	}
-
-	/**
 	 * Gets the day of the week.
 	 * 
 	 * @return 1 : SUNDAY; 2 : MONDAY; 3 : TUESDAY; 4 : WEDNESDAY; 5 : THURSDAY;
@@ -164,29 +168,38 @@ public class Time implements Comparable<Time>, Serializable {
 		return calendar.get(Calendar.DAY_OF_WEEK);
 	}
 
-	public Time addMinutes(int amount) {
-		calendar.add(GregorianCalendar.MINUTE, amount);
-		return this;
-	}
-
-	public Time addHours(int amount) {
-		calendar.add(GregorianCalendar.HOUR_OF_DAY, amount);
-		return this;
-	}
-
-	public Time addDays(int amount) {
-		calendar.add(GregorianCalendar.DATE, amount);
-		return this;
-	}
-
 	/**
-	 * @return 1 : working day 0: weekend
+	 * Checks if the current time is in a working day or not.
 	 */
 	public boolean isWorkingDay() {
 		if (getDayOfWeek() >= 2 && getDayOfWeek() <= 6) {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Adds amount of minutes to the current time.
+	 */
+	public Time addMinutes(int amount) {
+		calendar.add(GregorianCalendar.MINUTE, amount);
+		return this;
+	}
+
+	/**
+	 * Adds amount of hours to the current time.
+	 */
+	public Time addHours(int amount) {
+		calendar.add(GregorianCalendar.HOUR_OF_DAY, amount);
+		return this;
+	}
+
+	/**
+	 * Adds amount of days to the current time.
+	 */
+	public Time addDays(int amount) {
+		calendar.add(GregorianCalendar.DATE, amount);
+		return this;
 	}
 
 	public String[] computeDateInWeeks(int desiredWeeks, String datePattern) {
@@ -244,7 +257,7 @@ public class Time implements Comparable<Time>, Serializable {
 		}
 		return dateArray;
 	}
-	
+
 	public String[] computeDateInDays(int desiredDays, String datePattern, boolean ignoreWorkingDay) {
 		if (desiredDays <= 0) {
 			return new String[0];
@@ -258,7 +271,8 @@ public class Time implements Comparable<Time>, Serializable {
 		while (desiredDays > 0) {
 			timestamp -= 1000 * 60 * 60 * 24;
 			Time timeIndex = new Time(timestamp);
-			if (ignoreWorkingDay || (isWorkingDay() && timeIndex.isWorkingDay()) || (!isWorkingDay() && !timeIndex.isWorkingDay())) {
+			if (ignoreWorkingDay || (isWorkingDay() && timeIndex.isWorkingDay())
+					|| (!isWorkingDay() && !timeIndex.isWorkingDay())) {
 				sdf.format(timestamp);
 				dateArray[desiredDays - 1] = sdf.format(timestamp);
 				desiredDays--;
@@ -269,12 +283,7 @@ public class Time implements Comparable<Time>, Serializable {
 
 	@Override
 	public int compareTo(Time o) {
-		if (this.calendar.compareTo(o.calendar) < 0) {
-			return -1;
-		} else if (this.calendar.compareTo(o.calendar) > 0) {
-			return 1;
-		}
-		return 0;
+		return this.calendar.compareTo(o.calendar);
 	}
 
 }
