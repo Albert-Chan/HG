@@ -30,12 +30,20 @@ public class Time implements Comparable<Time>, Serializable {
 		this(t.getTimestamp());
 	}
 
+	/**
+	 * Formats the current time to the given pattern.
+	 * @param pattern the format pattern
+	 * @return
+	 */
 	public String format(String pattern) {
 		sdf.applyPattern(pattern);
-		Date date = new Date(calendar.getTimeInMillis());
-		return sdf.format(date);
+		return sdf.format(calendar.getTimeInMillis());
 	}
 
+	/**
+	 * Gets the timestamp of this time.
+	 * @return the timestamp of this time.
+	 */
 	public long getTimestamp() {
 		return calendar.getTimeInMillis();
 	}
@@ -137,7 +145,7 @@ public class Time implements Comparable<Time>, Serializable {
 	}
 
 	/**
-	 * Gets the max day of month
+	 * Gets the max day of month.
 	 * 
 	 * @return
 	 */
