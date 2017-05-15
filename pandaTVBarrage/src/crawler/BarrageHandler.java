@@ -40,22 +40,30 @@ public class BarrageHandler {
 	public void handle() throws IOException {
 		InputStream inputStream = socket.getInputStream();
 		byte[] readBytes = new byte[2048];
+		int times = 0;
 		while (true) {
 			int len = inputStream.read(readBytes);
 			if (len == 0) {
 				try {
+					System.err.println("Sleeping ...");
 					Thread.sleep(1000);
 					continue;
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+				
 			}
-
+			System.err.println("read times " + ++times);
 			int totalLength = len + vestigeLength;
 			byte[] bytes = new byte[totalLength];
-			System.arraycopy(vestige, vestigeIndex, bytes, 0, vestigeLength);
-			System.arraycopy(readBytes, 0, bytes, vestigeLength, len);
-
+			
+			try {
+				System.arraycopy(vestige, vestigeIndex, bytes, 0, vestigeLength);
+				System.arraycopy(readBytes, 0, bytes, vestigeLength, len);
+			} catch (ArrayIndexOutOfBoundsException e) {
+				System.err.println( "vestige.length: " + vestige.length + "vestigeIndex: " + vestigeIndex + "vestigeLength: " + vestigeLength);
+			}
+			
 			int commentStart = -1, commentEnd = -1;
 
 			for (int i = 0; i < totalLength; i++) {

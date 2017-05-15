@@ -52,7 +52,7 @@ public class Crawler extends Thread {
 
 		int errorNo = jsonObject1.getInt("errno");
 		if (errorNo != 0) {
-			throw new IOException("Failed on phase 1.");
+			throw new IOException("Failed on phase 1. " + jsonObject1.toString());
 		} else {
 			return jsonObject1.getJSONObject("data");
 		}
@@ -74,7 +74,7 @@ public class Crawler extends Thread {
 
 		int errorNo = jsonObject2.getInt("errno");
 		if (errorNo != 0) {
-			throw new IOException("Failed on phase 2.");
+			throw new IOException("Failed on phase 2. " + jsonObject2.toString());
 		} else {
 			JSONObject j = jsonObject2.getJSONObject("data");
 			rid = String.valueOf(j.getLong("rid"));
